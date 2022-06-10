@@ -22,6 +22,7 @@ use think\queue\event\JobExceptionOccurred;
 use think\queue\event\JobFailed;
 use think\queue\event\JobProcessed;
 use think\queue\event\JobProcessing;
+use think\queue\event\Looping;
 use think\queue\event\WorkerStopping;
 use think\queue\exception\MaxAttemptsExceededException;
 use Throwable;
@@ -78,6 +79,14 @@ class Worker
         $lastRestart = $this->getTimestampOfLastQueueRestart();
 
         while (true) {
+
+            // 是否允许守护进程继续循环
+            if (!$this->daemonShouldRun($connection, $queue, $delay, $sleep, $maxTries, $memory, $timeout)) {
+                $this->sleep($sleep);
+                $this->stopIfNecessary(null, $lastRestart, $memory);
+
+                continue;
+            }
 
             $job = $this->getNextJob(
                 $this->queue->connection($connection),
@@ -198,6 +207,19 @@ class Worker
     protected function timeoutForJob($job, $timeout)
     {
         return $job && !is_null($job->timeout()) ? $job->timeout() : $timeout;
+    }
+
+    /**
+     * Determine if the daemon should process on this iteration.
+     *
+     * @param  string  $connection
+     * @param  string  $queue
+     * @return bool
+     */
+    protected function daemonShouldRun($connection, $queue, $delay, $sleep, $maxTries, $memory, $timeout)
+    {
+        $this->event->trigger(new Looping($connection, $queue, $delay, $sleep, $maxTries, $memory, $timeout));
+        return $this->paused;
     }
 
     /**
