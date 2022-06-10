@@ -1,10 +1,14 @@
 {
-    "name": "topthink/think-queue",
+    "name": "jayin/think-queue",
     "description": "The ThinkPHP6 Queue Package",
     "authors": [
         {
             "name": "yunwuxin",
             "email": "448901948@qq.com"
+        },
+        {
+            "name": "jayin",
+            "email": "tonjayin@gmail.com"
         }
     ],
     "license": "Apache-2.0",
