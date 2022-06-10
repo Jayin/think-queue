@@ -15,6 +15,8 @@ use Closure;
 use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\Process;
 use think\App;
+use think\Event;
+use think\queue\event\Looping;
 
 class Listener
 {
@@ -25,9 +27,9 @@ class Listener
     protected $commandPath;
 
     /**
-     * @var string
+     * @var Event
      */
-    protected $workerCommand;
+    protected $event;
 
     /**
      * @var \Closure|null
@@ -37,14 +39,15 @@ class Listener
     /**
      * @param string $commandPath
      */
-    public function __construct($commandPath)
+    public function __construct($commandPath, Event $event)
     {
         $this->commandPath = $commandPath;
+        $this->event = $event;
     }
 
     public static function __make(App $app)
     {
-        return new self($app->getRootPath());
+        return new self($app->getRootPath(), $app->event);
     }
 
     /**
@@ -72,6 +75,7 @@ class Listener
         $process = $this->makeProcess($connection, $queue, $delay, $sleep, $maxTries, $memory, $timeout);
 
         while (true) {
+            $this->event->trigger(new Looping($connection, $queue, $delay, $sleep, $maxTries, $memory, $timeout));
             $this->runProcess($process, $memory);
         }
     }
