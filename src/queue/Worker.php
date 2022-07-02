@@ -219,7 +219,7 @@ class Worker
     protected function daemonShouldRun($connection, $queue, $delay, $sleep, $maxTries, $memory, $timeout)
     {
         $this->event->trigger(new Looping($connection, $queue, $delay, $sleep, $maxTries, $memory, $timeout));
-        return $this->paused;
+        return !$this->paused;
     }
 
     /**
